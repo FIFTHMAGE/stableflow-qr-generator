@@ -393,33 +393,30 @@ function renderCanvas() {
   }
 }
 
-// Convert QRInstance raw Blob to HTMLImageElement using Data URL
-function convertQRBlobToImage(qrInstance) {
-  return qrInstance.getRawData('png').then(blob => {
-    if (!blob) throw new Error('QRCodeStyling returned empty blob');
+// Convert QRInstance SVG element to HTMLImageElement reliably without canvas taint errors
+function convertQRToImage(qrInstance) {
+  return qrInstance._getElement('svg').then(svgEl => {
+    if (!svgEl) throw new Error('QRCodeStyling returned empty SVG');
+    const svgString = new XMLSerializer().serializeToString(svgEl);
+    const svgDataUrl = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgString);
     return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => {
-        const img = new Image();
-        img.onload = () => resolve(img);
-        img.onerror = (err) => reject(err);
-        img.src = reader.result;
-      };
-      reader.onerror = (err) => reject(err);
-      reader.readAsDataURL(blob);
+      const img = new Image();
+      img.onload = () => resolve(img);
+      img.onerror = (err) => reject(err);
+      img.src = svgDataUrl;
     });
   });
 }
 
 const STABLEFLOW_CENTER_LOGO = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'><circle cx='50' cy='50' r='48' fill='%23ffffff'/><path d='M 30,20 C 15,40 20,75 55,80 C 75,83 80,75 75,65 C 65,80 30,75 35,45 C 37,33 45,23 55,20 Z' fill='%2315182B'/><circle cx='60' cy='45' r='22' fill='%2315182B'/><polygon points='60,33 63,42 72,45 63,48 60,57 57,48 48,45 57,42' fill='%23ffffff'/></svg>";
 
-// Primary Styled QR Code Configuration
+// Primary Styled QR Code Configuration (SVG mode)
 function createStyledQRInstance(walletData) {
   const qrLogo = (typeof ASSETS !== 'undefined' && ASSETS.qrCenterLogo) ? ASSETS.qrCenterLogo : STABLEFLOW_CENTER_LOGO;
   return new QRCodeStyling({
     width: 700,
     height: 700,
-    type: 'canvas',
+    type: 'svg',
     data: walletData,
     margin: 0,
     image: qrLogo,
@@ -432,12 +429,12 @@ function createStyledQRInstance(walletData) {
   });
 }
 
-// Fallback Plain Square QR Code Configuration
+// Fallback Plain Square QR Code Configuration (SVG mode without logo)
 function createFallbackQRInstance(walletData) {
   return new QRCodeStyling({
     width: 700,
     height: 700,
-    type: 'canvas',
+    type: 'svg',
     data: walletData,
     margin: 8,
     qrOptions: { errorCorrectionLevel: 'M' },
@@ -460,39 +457,49 @@ function generateQRCode(walletAddress) {
 
   let resolved = false;
 
+  const tryApplyImage = (img) => {
+    if (currentToken !== qrGenToken || resolved) return;
+    resolved = true;
+    currentQRImage = img;
+    isQRReady = true;
+    renderCanvas();
+  };
+
   // Timeout guard for fallback rendering
   const timeoutId = setTimeout(() => {
     if (resolved || currentToken !== qrGenToken) return;
     
     const fallbackQR = createFallbackQRInstance(targetData);
-    convertQRBlobToImage(fallbackQR).then(img => {
-      if (currentToken !== qrGenToken || resolved) return;
-      resolved = true;
-      currentQRImage = img;
-      isQRReady = true;
-      renderCanvas();
+    convertQRToImage(fallbackQR).then(img => {
+      tryApplyImage(img);
     }).catch(err => {
       if (currentToken !== qrGenToken) return;
       console.error('Fallback QR code failed:', err);
       const statusEl = document.getElementById('status');
-      statusEl.textContent = 'Failed to generate QR code.';
-      statusEl.classList.add('err');
-      renderCanvas();
+      if (statusEl) {
+        statusEl.textContent = 'Failed to generate QR code.';
+        statusEl.classList.add('err');
+      }
     });
-  }, 2500);
+  }, 1500);
 
   // Primary rendering attempt
-  const styledQR = createStyledQRInstance(targetData);
-  convertQRBlobToImage(styledQR).then(img => {
-    if (currentToken !== qrGenToken || resolved) return;
-    resolved = true;
-    clearTimeout(timeoutId);
-    currentQRImage = img;
-    isQRReady = true;
-    renderCanvas();
-  }).catch(err => {
-    console.warn('Styled QR failed, attempting fallback...', err);
-  });
+  try {
+    const styledQR = createStyledQRInstance(targetData);
+    convertQRToImage(styledQR).then(img => {
+      clearTimeout(timeoutId);
+      tryApplyImage(img);
+    }).catch(err => {
+      console.warn('Styled QR failed, attempting fallback...', err);
+      const fallbackQR = createFallbackQRInstance(targetData);
+      convertQRToImage(fallbackQR).then(img => {
+        clearTimeout(timeoutId);
+        tryApplyImage(img);
+      }).catch(e => console.error('Fallback failed:', e));
+    });
+  } catch (e) {
+    console.error('Exception in QR creation:', e);
+  }
 }
 
 // Form Controls & UI Event Handling
@@ -579,10 +586,12 @@ downloadBtn.addEventListener('click', () => {
 });
 
 // Initialization
+activeState.bizName = bizNameInput.value;
+activeState.wallet = walletInput.value;
+generateQRCode(activeState.wallet);
+
 preloadAssets(() => {
-  activeState.bizName = bizNameInput.value;
-  activeState.wallet = walletInput.value;
-  generateQRCode(activeState.wallet);
+  renderCanvas();
 });
 </script>
 </body>
