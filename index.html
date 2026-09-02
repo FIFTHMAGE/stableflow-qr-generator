@@ -215,6 +215,8 @@ let activeState = {
   logoImg: null
 };
 
+const STABLEFLOW_CENTER_LOGO = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'><circle cx='50' cy='50' r='48' fill='%23ffffff'/><path d='M 30,20 C 15,40 20,75 55,80 C 75,83 80,75 75,65 C 65,80 30,75 35,45 C 37,33 45,23 55,20 Z' fill='%2315182B'/><circle cx='60' cy='45' r='22' fill='%2315182B'/><polygon points='60,33 63,42 72,45 63,48 60,57 57,48 48,45 57,42' fill='%23ffffff'/></svg>";
+
 // Start preloading images
 const ASSETS = {
   subtract: typeof IMG_SUBTRACT !== 'undefined' ? IMG_SUBTRACT : '',
@@ -226,7 +228,7 @@ const ASSETS = {
   coinTL: typeof IMG_COIN_TL !== 'undefined' ? IMG_COIN_TL : '',
   coinBR: typeof IMG_COIN_BR !== 'undefined' ? IMG_COIN_BR : '',
   wordmark: typeof IMG_WORDMARK !== 'undefined' ? IMG_WORDMARK : '',
-  qrCenterLogo: typeof STABLEFLOW_CENTER_LOGO !== 'undefined' ? STABLEFLOW_CENTER_LOGO : ''
+  qrCenterLogo: STABLEFLOW_CENTER_LOGO
 };
 
 const loadedAssets = {};
@@ -407,8 +409,6 @@ function convertQRToImage(qrInstance) {
     });
   });
 }
-
-const STABLEFLOW_CENTER_LOGO = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'><circle cx='50' cy='50' r='48' fill='%23ffffff'/><path d='M 30,20 C 15,40 20,75 55,80 C 75,83 80,75 75,65 C 65,80 30,75 35,45 C 37,33 45,23 55,20 Z' fill='%2315182B'/><circle cx='60' cy='45' r='22' fill='%2315182B'/><polygon points='60,33 63,42 72,45 63,48 60,57 57,48 48,45 57,42' fill='%23ffffff'/></svg>";
 
 // Primary Styled QR Code Configuration (SVG mode)
 function createStyledQRInstance(walletData) {
