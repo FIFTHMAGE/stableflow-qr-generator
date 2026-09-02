@@ -421,10 +421,10 @@ function createStyledQRInstance(walletData) {
     margin: 0,
     image: qrLogo,
     qrOptions: { errorCorrectionLevel: 'H' },
-    imageOptions: { hideBackgroundDots: true, imageSize: 0.32, margin: 6 },
-    dotsOptions: { color: '#15182B', type: 'rounded' },
-    cornersSquareOptions: { type: 'dot', color: '#15182B' },
-    cornersDotOptions: { type: 'dot', color: '#15182B' },
+    imageOptions: { hideBackgroundDots: true, imageSize: 0.3, margin: 6 },
+    dotsOptions: { color: '#000000', type: 'dots' },
+    cornersSquareOptions: { type: 'extra-rounded', color: '#000000' },
+    cornersDotOptions: { type: 'dot', color: '#000000' },
     backgroundOptions: { color: '#ffffff' }
   });
 }
@@ -437,10 +437,10 @@ function createFallbackQRInstance(walletData) {
     type: 'svg',
     data: walletData,
     margin: 8,
-    qrOptions: { errorCorrectionLevel: 'M' },
-    dotsOptions: { color: '#15182B', type: 'square' },
-    cornersSquareOptions: { type: 'square', color: '#15182B' },
-    cornersDotOptions: { type: 'square', color: '#15182B' },
+    qrOptions: { errorCorrectionLevel: 'H' },
+    dotsOptions: { color: '#000000', type: 'dots' },
+    cornersSquareOptions: { type: 'extra-rounded', color: '#000000' },
+    cornersDotOptions: { type: 'dot', color: '#000000' },
     backgroundOptions: { color: '#ffffff' }
   });
 }
