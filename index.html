@@ -216,11 +216,27 @@ let activeState = {
 };
 
 // Start preloading images
-const loadedAssets = {};
-let assetCount = 0;
-const assetKeys = Object.keys(ASSETS);
+const ASSETS = {
+  subtract: typeof IMG_SUBTRACT !== 'undefined' ? IMG_SUBTRACT : '',
+  startAccepting: typeof IMG_START_ACCEPTING !== 'undefined' ? IMG_START_ACCEPTING : '',
+  headline: typeof IMG_HEADLINE !== 'undefined' ? IMG_HEADLINE : '',
+  assetsPills: typeof IMG_ASSETS_PILLS !== 'undefined' ? IMG_ASSETS_PILLS : '',
+  networksPills: typeof IMG_NETWORKS_PILLS !== 'undefined' ? IMG_NETWORKS_PILLS : '',
+  poweredBy: typeof IMG_POWERED_BY !== 'undefined' ? IMG_POWERED_BY : '',
+  coinTL: typeof IMG_COIN_TL !== 'undefined' ? IMG_COIN_TL : '',
+  coinBR: typeof IMG_COIN_BR !== 'undefined' ? IMG_COIN_BR : '',
+  wordmark: typeof IMG_WORDMARK !== 'undefined' ? IMG_WORDMARK : '',
+  qrCenterLogo: typeof STABLEFLOW_CENTER_LOGO !== 'undefined' ? STABLEFLOW_CENTER_LOGO : ''
+};
 
+const loadedAssets = {};
 function preloadAssets(onComplete) {
+  const assetKeys = Object.keys(ASSETS).filter(k => ASSETS[k]);
+  if (assetKeys.length === 0) {
+    onComplete();
+    return;
+  }
+  let assetCount = 0;
   assetKeys.forEach(key => {
     const img = new Image();
     img.crossOrigin = 'anonymous';
@@ -228,16 +244,12 @@ function preloadAssets(onComplete) {
     img.onload = () => {
       loadedAssets[key] = img;
       assetCount++;
-      if (assetCount === assetKeys.length) {
-        onComplete();
-      }
+      if (assetCount === assetKeys.length) onComplete();
     };
     img.onerror = () => {
-      console.error('Failed to load asset:', key);
+      console.warn('Failed to load asset:', key);
       assetCount++;
-      if (assetCount === assetKeys.length) {
-        onComplete();
-      }
+      if (assetCount === assetKeys.length) onComplete();
     };
   });
 }
@@ -399,15 +411,18 @@ function convertQRBlobToImage(qrInstance) {
   });
 }
 
+const STABLEFLOW_CENTER_LOGO = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'><circle cx='50' cy='50' r='48' fill='%23ffffff'/><path d='M 30,20 C 15,40 20,75 55,80 C 75,83 80,75 75,65 C 65,80 30,75 35,45 C 37,33 45,23 55,20 Z' fill='%2315182B'/><circle cx='60' cy='45' r='22' fill='%2315182B'/><polygon points='60,33 63,42 72,45 63,48 60,57 57,48 48,45 57,42' fill='%23ffffff'/></svg>";
+
 // Primary Styled QR Code Configuration
 function createStyledQRInstance(walletData) {
+  const qrLogo = (typeof ASSETS !== 'undefined' && ASSETS.qrCenterLogo) ? ASSETS.qrCenterLogo : STABLEFLOW_CENTER_LOGO;
   return new QRCodeStyling({
     width: 700,
     height: 700,
     type: 'canvas',
     data: walletData,
     margin: 0,
-    image: ASSETS.qrCenterLogo,
+    image: qrLogo,
     qrOptions: { errorCorrectionLevel: 'H' },
     imageOptions: { hideBackgroundDots: true, imageSize: 0.32, margin: 6 },
     dotsOptions: { color: '#15182B', type: 'rounded' },
@@ -425,9 +440,7 @@ function createFallbackQRInstance(walletData) {
     type: 'canvas',
     data: walletData,
     margin: 8,
-    image: ASSETS.qrCenterLogo,
-    qrOptions: { errorCorrectionLevel: 'H' },
-    imageOptions: { hideBackgroundDots: true, imageSize: 0.28, margin: 6 },
+    qrOptions: { errorCorrectionLevel: 'M' },
     dotsOptions: { color: '#15182B', type: 'square' },
     cornersSquareOptions: { type: 'square', color: '#15182B' },
     cornersDotOptions: { type: 'square', color: '#15182B' },
